@@ -3,13 +3,14 @@
   hosts: localhost
   connection: local
   gather_facts: no
-  become: false  # Sudo hatasını engellemek için
+  become: false
   vars:
     base_port: 31001
 
   tasks:
     - name: Mevcut Docker sayisini al
-      shell: "docker ps -a --filter name=m-cloud- --format '{% raw %}{{.Names}}{% endraw %}' | wc -l"
+      # Süslü parantezleri sildik, doğrudan sayı alıyoruz
+      shell: "docker ps -a --filter name=m-cloud- -q | wc -l"
       register: docker_count
       changed_when: false
 
@@ -21,7 +22,7 @@
 
     - name: Port Hesapla
       set_fact:
-        assigned_port: "{{ base_port | int + (docker_count.stdout | default(0) | int) + (lxc_count.stdout | default(0) | int) }}"
+        assigned_port: "{{ base_port | int + (docker_count.stdout | trim | int) + (lxc_count.stdout | trim | int) }}"
 
     - name: Light Paket - Docker Terminal Baslat
       when: user_choice == 'light_container'
@@ -29,6 +30,7 @@
         name: "m-cloud-{{ site_adi }}"
         image: "tsl0922/ttyd:latest"
         command: "ttyd -p 7681 login"
+        # Portu açıkça numara olarak gönderiyoruz
         ports:
           - "{{ assigned_port | int }}:7681"
         restart_policy: always

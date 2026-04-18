@@ -1,29 +1,22 @@
 ---
-- name: M-Cloud Otomatik Makine Dagitiyor
+- name: M-Cloud Otomatik Makine Provisioning
   hosts: localhost
   connection: local
+  gather_facts: no
   vars:
     base_port: 31001
 
   tasks:
-    - name: Mevcut makineleri say
-      shell: "lxc list --format csv | wc -l"
-      register: machine_count
-
-    - name: Portu Hesapla
-      set_fact:
-        assigned_port: "{{ base_port | int + machine_count.stdout | int }}"
-
-    - name: Full Paket - Ubuntu LXC Baslat
-      when: user_choice == 'full_vm'
-      shell: "lxc launch images:ubuntu/22.04 {{ site_adi }}"
+    # ... (diğer tasklar aynı kalıyor)
 
     - name: Light Paket - Docker Terminal Baslat
       when: user_choice == 'light_container'
-      docker_container:
-        name: "{{ site_adi }}"
+      # BURASI DEĞİŞTİ: 'docker_container' yerine 'community.docker.docker_container'
+      community.docker.docker_container:
+        name: "m-cloud-{{ site_adi }}"
         image: "tsl0922/ttyd:latest"
-        command: "sh -c 'apt update && apt install -y neofetch && ttyd login'"
+        command: "ttyd -p 7681 login"
         ports:
           - "{{ assigned_port }}:7681"
         restart_policy: always
+        state: started

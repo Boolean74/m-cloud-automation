@@ -7,9 +7,9 @@
     base_port: 31001
 
   tasks:
-    # 1. Mevcut Docker sayısını al (Hata almaması için '|| true' ekledik)
+    # 1. Mevcut Docker sayısını al (Parantez hatası düzeltildi)
     - name: Mevcut Docker sayisini al
-      shell: "docker ps -a --filter name=m-cloud- --format '{{"{{ .Names }}"}}' | wc -l"
+      shell: "docker ps -a --filter name=m-cloud- --format '{% raw %}{{.Names}}{% endraw %}' | wc -l"
       register: docker_count
       changed_when: false
 

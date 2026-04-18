@@ -3,29 +3,27 @@
   hosts: localhost
   connection: local
   gather_facts: no
+  # Become: false yaparak sudo hatasını engelliyoruz
+  become: false 
   vars:
     base_port: 31001
 
   tasks:
-    # 1. Mevcut Docker sayısını al (Parantez hatası düzeltildi)
     - name: Mevcut Docker sayisini al
       shell: "docker ps -a --filter name=m-cloud- --format '{% raw %}{{.Names}}{% endraw %}' | wc -l"
       register: docker_count
       changed_when: false
 
-    # 2. Mevcut LXC sayısını al
     - name: Mevcut LXC sayisini al
       shell: "lxc list --format csv | wc -l"
       register: lxc_count
       ignore_errors: yes
       changed_when: false
 
-    # 3. Portu Güvenli Şekilde Hesapla
     - name: Port Hesapla
       set_fact:
         assigned_port: "{{ base_port | int + (docker_count.stdout | default(0) | int) + (lxc_count.stdout | default(0) | int) }}"
 
-    # 4. LIGHT PAKET (DOCKER) KURULUMU
     - name: Light Paket - Docker Terminal Baslat
       when: user_choice == 'light_container'
       community.docker.docker_container:
@@ -36,8 +34,3 @@
           - "{{ assigned_port }}:7681"
         restart_policy: always
         state: started
-
-    # 5. FULL PAKET (LXC) KURULUMU
-    - name: Full Paket - Ubuntu LXC Baslat
-      when: user_choice == 'full_vm'
-      shell: "lxc launch images:ubuntu/22.04 {{ site_adi }}"

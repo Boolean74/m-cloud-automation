@@ -3,8 +3,7 @@
   hosts: localhost
   connection: local
   gather_facts: no
-  # Become: false yaparak sudo hatasını engelliyoruz
-  become: false 
+  become: false  # Sudo hatasını engellemek için
   vars:
     base_port: 31001
 
@@ -31,6 +30,6 @@
         image: "tsl0922/ttyd:latest"
         command: "ttyd -p 7681 login"
         ports:
-          - "{{ assigned_port }}:7681"
+          - "{{ assigned_port | int }}:7681"
         restart_policy: always
         state: started

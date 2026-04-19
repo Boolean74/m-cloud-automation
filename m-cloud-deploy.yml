@@ -1,34 +1,24 @@
 ---
 - name: M-Cloud Otomatik Makine Provisioning
-  hosts: localhost
-  connection: local
+  hosts: all
   gather_facts: no
-  become: false
+  become: true  # Ana makinede yetkili işlem yapmak için
   vars:
     base_port: 31001
-    # Survey'den veri gelmezse kullanılacak yedek değerler
     u_choice: "{{ user_choice | default('light_container') }}"
     s_adi: "{{ site_adi | default('m-cloud-v1') }}"
 
   tasks:
-    # 1. Mevcut konteyner sayısını alarak portu otomatik belirle
     - name: Mevcut Docker sayisini al
       shell: "docker ps -a --filter name=m-cloud- -q | wc -l"
       register: docker_count
       changed_when: false
 
-    # 2. Port hesaplamasını yap
     - name: Port Hesapla
       set_fact:
         assigned_port: "{{ (base_port | int) + (docker_count.stdout | trim | int) }}"
 
-    # 3. Bilgileri ekrana yazdır (Kontrol amaçlı)
-    - name: Kurulum Bilgileri
-      debug:
-        msg: "Port: {{ assigned_port }} | Isim: {{ s_adi }} | Mod: {{ u_choice }}"
-
-    # 4. DOCKER KURULUMU (Shell yöntemi ile - En sağlam yol)
-    - name: Light Paket - Docker Terminal Baslat
+    - name: Docker Kurulumu
       when: u_choice == 'light_container'
       shell: |
         docker run -d \
@@ -36,10 +26,3 @@
           --restart always \
           -p {{ assigned_port }}:7681 \
           tsl0922/ttyd:latest ttyd -p 7681 login
-      register: docker_result
-
-    # 5. Sonucu göster
-    - name: Basari Durumu
-      debug:
-        msg: "Konteyner basariyla kuruldu! Erisim adresi: http://144.24.169.102:{{ assigned_port }}"
-      when: docker_result is succeeded
